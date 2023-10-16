@@ -1,59 +1,71 @@
 #include <WiFi.h>
-#include <Espalexa.h>
+#include <fauxmoESP.h>
 
-
-// Wifi Credentials
-#define WIFI_SSID	""
+// Wifi Configution
+#define WIFI_SSID		""
 #define WIFI_PASSWORD	""
+#define WIFI_LED		2
 
-// Configure PINs
-#define WIFI_LED	2
-#define RELAY_1		23
+// Configure pins
+byte relayPins [] 		= {};
+char* relayNames [] 	= {};
+#define N_RELAYS sizeof(relayPins)
 
-// Configure device names
-#define RELAY_1_NAME	""
-#define RELAY_2_NAME	""
-#define RELAY_3_NAME	""
-#define RELAY_4_NAME	""
-#define RELAY_5_NAME	""
-#define RELAY_6_NAME	""
-#define RELAY_7_NAME	""
-#define RELAY_8_NAME  	""
+// Enum for easy controlling
+enum {Off = HIGH, On = LOW};
 
-// Callback functions
-void relayStateChanged();
-
-void relayStateChanged() {
-	Serial.println("Relay state changed");
-}
+fauxmoESP fauxmo;
 
 void setupWifi() {
-	Serial.printf("Trying to connect to %s", WIFI_SSID);
+	Serial.printf("Trying to connect to %s...", WIFI_SSID);
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
+	digitalWrite(WIFI_LED, Off);
 	while(WiFi.status() != WL_CONNECTED) {
 		Serial.print(".");
 		delay(500);
 	}
-	Serial.println("Connected with IP %s", WiFi.localIP());
+	digitalWrite(WIFI_LED, On);
+	Serial.printf("Connected with IP %s", WiFi.localIP());
 }
 
-void connectDevices() {
-	Serial.println("Adding Alex devices");
-	espalexa.addDevice(RELAY_1_NAME, relayStateChanged);
-	espalexa.begin();
+void initializePins() {
+	Serial.println("Initializing pins...");
+	for (int n = 0; n < N_RELAYS; n++)  {
+		pinMode(relayPins[n], OUTPUT);
+		digitalWrite(relayPins[n], Off);
+    }
+}
+
+void addAlexaDevices() {
+	Serial.println("Adding Alex devices...");
+	for (int n = 0; n < N_RELAYS; n++)  {
+		fauxmo.addDevice(relayNames[n]);
+    }
+
+    fauxmo.setPort(80);
+    fauxmo.enable(true);
+    fauxmo.onSetState([](unsigned char device_id, const char * device_name, bool state, unsigned char value) {
+        Serial.printf("Relay %s state is %s\n", device_name, state ? "ON" : "OFF");
+    });
 }
 
 
 void setup() {
 	Serial.begin(115200);
-	
 	pinMode(WIFI_LED, OUTPUT);
-	digitalWrite(WIFI_LED, HIGH);
 	setupWifi();
-	digitalWrite(WIFI_LED, HIGH);
+	initializePins();
+	addAlexaDevices();
+}
 
-  pinMode(RELAY_1_NAME, OUTPUT);
-	connectDevices();
+void loop() {
+	if (WiFi.status() != WL_CONNECTED) {
+		Serial.println("We lost WiFi connection. Retry.");
+		digitalWrite(WIFI_LED, Off);
+		setupWifi();
+	} else {
+		fauxmo.handle();
+	}
 }
