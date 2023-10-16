@@ -3,21 +3,21 @@
 
 
 // Wifi Credentials
-#define WIFI_SSID       ""
-#define WIFI_PASSWORD 	""
+#define WIFI_SSID	""
+#define WIFI_PASSWORD	""
 
 // Configure PINs
-#define WIFI_LED 		    2
-#define RELAY_1         23
+#define WIFI_LED	2
+#define RELAY_1		23
 
 // Configure device names
-#define RELAY_1_NAME  	""
-#define RELAY_2_NAME	  ""
-#define RELAY_3_NAME	  ""
-#define RELAY_4_NAME	  ""
-#define RELAY_5_NAME	  ""
-#define RELAY_6_NAME	  ""
-#define RELAY_7_NAME	  ""
+#define RELAY_1_NAME	""
+#define RELAY_2_NAME	""
+#define RELAY_3_NAME	""
+#define RELAY_4_NAME	""
+#define RELAY_5_NAME	""
+#define RELAY_6_NAME	""
+#define RELAY_7_NAME	""
 #define RELAY_8_NAME  	""
 
 // Callback functions
