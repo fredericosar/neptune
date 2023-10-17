@@ -5,28 +5,29 @@
 #define WIFI_PASSWORD	""
 #define WIFI_LED		2
 
-byte relayPins []		= {};
-char* relayNames []		= {};
-bool relayStates []		= {};
+byte relayPins[]		= {};
+char* relayNames[]		= {};
+bool relayStates[]		= {};
 #define N_RELAYS sizeof(relayPins)
 
-int pumpPin = 13
-bool pumpState = false
+int pumpPin = 12;
+bool pumpState = false;
 
 fauxmoESP fauxmo;
 
 void setupWifi() {
-	Serial.printf("Trying to connect to %s...", WIFI_SSID);
+	Serial.printf("Trying to connect to %s", WIFI_SSID);
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-	digitalWrite(WIFI_LED, HIGH);
+	digitalWrite(WIFI_LED, LOW);
 	while(WiFi.status() != WL_CONNECTED) {
 		Serial.print(".");
 		delay(500);
 	}
-	digitalWrite(WIFI_LED, LOW);
-	Serial.printf("Connected with IP %s", WiFi.localIP());
+	digitalWrite(WIFI_LED, HIGH);
+	Serial.print("\nConnected with IP: ");
+	Serial.println(WiFi.localIP());
 }
 
 void initializePins() {
@@ -37,9 +38,9 @@ void initializePins() {
 	}
 }
 
-int findRelay(char* relayName) {
-	for (n = 0; n < N_RELAYS; n++){
-		if(relayNames[n] == relayName){
+int findRelay(const char* relayName) {
+	for (int n = 0; n < N_RELAYS; n++){
+		if(strcmp(relayNames[n], relayName) == 0){
 			return n;
 		}
 	}
@@ -49,7 +50,7 @@ int findRelay(char* relayName) {
 void handlePump(){
 	for (int n = 0; n < N_RELAYS; n++)  {
 		if(relayStates[n] == true) {
-			Serial.printf("Relay %s is on", relayNames[n]);
+			Serial.printf("Relay %s is on\n", relayNames[n]);
 			Serial.println("Turn on pump");
 			return;
 		}
@@ -61,15 +62,15 @@ void addAlexaDevices() {
 	Serial.println("Adding Alex devices...");
 	for (int n = 0; n < N_RELAYS; n++)  {
 		fauxmo.addDevice(relayNames[n]);
-		relayStates[n] = false
+		relayStates[n] = false;
 	}
 
 	fauxmo.setPort(80);
 	fauxmo.enable(true);
-	fauxmo.onSetState([](unsigned char id, const char * relayName, bool state, unsigned char value) {
+	fauxmo.onSetState([](unsigned char id, const char* relayName, bool state, unsigned char value) {
 		Serial.printf("Relay %s state is %s\n", relayName, state ? "ON" : "OFF");
 		relayStates[findRelay(relayName)] = state;
-		handlePump();
+		handlePump(); 
 	});
 }
 
@@ -85,7 +86,6 @@ void setup() {
 void loop() {
 	if (WiFi.status() != WL_CONNECTED) {
 		Serial.println("We lost WiFi connection. Retry.");
-		digitalWrite(WIFI_LED, HIGH);
 		setupWifi();
 	} else {
 		fauxmo.handle();
